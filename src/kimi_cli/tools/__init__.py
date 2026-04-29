@@ -87,6 +87,72 @@ def extract_key_argument(json_content: str | streamingjson.Lexer, tool_name: str
             if not isinstance(curr_args, dict) or not curr_args.get("url"):
                 return None
             key_argument = str(curr_args["url"])
+        case "BrowserNavigate":
+            if not isinstance(curr_args, dict) or not curr_args.get("url"):
+                return None
+            key_argument = str(curr_args["url"])
+        case "BrowserClick":
+            if not isinstance(curr_args, dict) or not curr_args.get("selector"):
+                return None
+            key_argument = str(curr_args["selector"])
+        case "BrowserType":
+            if not isinstance(curr_args, dict) or not curr_args.get("selector"):
+                return None
+            key_argument = str(curr_args["selector"])
+        case "BrowserScroll":
+            if not isinstance(curr_args, dict):
+                return None
+            key_argument = curr_args.get("direction", "down")
+        case "BrowserScreenshot":
+            return None
+        case "BrowserExtract":
+            return None
+        case "BrowserCloseTool" | "BrowserStop":
+            return None
+        case "BrowserEvaluate":
+            if not isinstance(curr_args, dict) or not curr_args.get("script"):
+                return None
+            key_argument = str(curr_args["script"])[:50]
+        case "BrowserGetHTML":
+            return None
+        case "BrowserNetworkStart":
+            if not isinstance(curr_args, dict):
+                return None
+            key_argument = str(curr_args.get("url_pattern", "**"))
+        case "BrowserNetworkList" | "BrowserNetworkStop":
+            return None
+        case "BrowserGetCookies":
+            return None
+        case "BrowserSetCookie":
+            if not isinstance(curr_args, dict) or not curr_args.get("name"):
+                return None
+            key_argument = str(curr_args["name"])
+        case "BrowserGetStorage":
+            if not isinstance(curr_args, dict):
+                return None
+            key_argument = str(curr_args.get("storage_type", "localStorage"))
+        case "BrowserWaitForSelector":
+            if not isinstance(curr_args, dict) or not curr_args.get("selector"):
+                return None
+            key_argument = str(curr_args["selector"])
+        case "BrowserPressKey":
+            if not isinstance(curr_args, dict) or not curr_args.get("key"):
+                return None
+            key_argument = str(curr_args["key"])
+        case "BrowserHover":
+            if not isinstance(curr_args, dict) or not curr_args.get("selector"):
+                return None
+            key_argument = str(curr_args["selector"])
+        case "BrowserGetTabs" | "BrowserNewTab":
+            return None
+        case "BrowserSwitchTab":
+            if not isinstance(curr_args, dict):
+                return None
+            key_argument = str(curr_args.get("index") or curr_args.get("url_contains", ""))
+        case "BrowserUse":
+            if not isinstance(curr_args, dict) or not curr_args.get("task"):
+                return None
+            key_argument = str(curr_args["task"])
         case _:
             if isinstance(json_content, streamingjson.Lexer):
                 # lexer.json_content is list[str] based on streamingjson source code
