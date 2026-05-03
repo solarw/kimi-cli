@@ -6,7 +6,7 @@ from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
-NAME = "Kimi Code CLI"
+NAME = "Kimi Code CLI (slw fork)"
 
 if TYPE_CHECKING:
     VERSION: str
