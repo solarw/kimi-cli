@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 type NotificationCategory = Literal["task", "agent", "system"]
 type NotificationSeverity = Literal["info", "success", "warning", "error"]
-type NotificationSink = Literal["llm", "wire", "shell"]
+type NotificationSink = Literal["llm", "wire", "shell", "telegram"]
 type NotificationDeliveryStatus = Literal["pending", "claimed", "acked"]
 
 
@@ -25,7 +25,7 @@ class NotificationEvent(BaseModel):
     severity: NotificationSeverity = "info"
     created_at: float = Field(default_factory=time.time)
     payload: dict[str, Any] = Field(default_factory=dict)
-    targets: list[NotificationSink] = Field(default_factory=lambda: ["llm", "wire", "shell"])
+    targets: list[NotificationSink] = Field(default_factory=lambda: ["llm", "wire", "shell", "telegram"])
     dedupe_key: str | None = None
 
 

@@ -25,7 +25,7 @@ from rich.text import Text
 from kimi_cli import logger
 from kimi_cli.background import list_task_views
 from kimi_cli.llm import model_display_name
-from kimi_cli.notifications import NotificationManager, NotificationWatcher
+from kimi_cli.notifications import NotificationManager, NotificationView, NotificationWatcher
 from kimi_cli.soul import LLMNotSet, LLMNotSupported, MaxStepsReached, RunCancelled, Soul, run_soul
 from kimi_cli.soul.kimisoul import FLOW_COMMAND_PREFIX, KimiSoul
 from kimi_cli.ui.shell import update as _update_mod
@@ -403,7 +403,7 @@ class Shell:
         else:
             self._start_background_task(self._auto_update())
 
-        _print_welcome_info(self.soul.name or "Kimi Code CLI", self._welcome_info)
+        _print_welcome_info(self.soul.name or "Kimi Code CLI by slw", self._welcome_info)
 
         # Start telemetry periodic flush and disk retry
         from kimi_cli.telemetry import get_sink
@@ -425,6 +425,21 @@ class Shell:
                 ),
             )
             self._start_background_task(watcher.run_forever())
+
+            from kimi_cli.utils.telegram_sender import send_telegram_notification
+
+            async def _on_tg_notification(notification: NotificationView) -> None:
+                await send_telegram_notification(
+                    f"[{notification.event.severity.upper()}] {notification.event.title}\n\n{notification.event.body}"
+                )
+
+            tg_watcher = NotificationWatcher(
+                self.soul.runtime.notifications,
+                sink="telegram",
+                before_poll=self.soul.runtime.background_tasks.reconcile,
+                on_notification=_on_tg_notification,
+            )
+            self._start_background_task(tg_watcher.run_forever())
             self._start_background_task(self._watch_root_wire_hub())
             await replay_recent_history(
                 self.soul.context.history,
@@ -1483,7 +1498,7 @@ class WelcomeInfoItem:
 
 
 def _print_welcome_info(name: str, info_items: list[WelcomeInfoItem]) -> None:
-    head = Text.from_markup("Welcome to Kimi Code CLI!")
+    head = Text.from_markup("Welcome to Kimi Code CLI by slw!")
     help_text = Text.from_markup("[grey50]Send /help for help information.[/grey50]")
 
     # Use Table for precise width control
