@@ -1004,6 +1004,16 @@ def logout(
         raise typer.Exit(code=1)
 
 
+@cli.command()
+def telegram() -> None:
+    """Run Kimi Telegram bot."""
+    import asyncio
+
+    from kimi_cli.telegram_bot import main as bot_main
+
+    asyncio.run(bot_main())
+
+
 @cli.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def term(
     ctx: typer.Context,
