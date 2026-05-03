@@ -47,6 +47,7 @@ agent:
     # - "kimi_cli.tools.browser:BrowserUse"  # uncomment when needed
     - "kimi_cli.tools.plan:ExitPlanMode"
     - "kimi_cli.tools.plan.enter:EnterPlanMode"
+    - "kimi_cli.tools.telegram:SendTelegramNotification"
   subagents:
     coder:
       path: ./coder.yaml

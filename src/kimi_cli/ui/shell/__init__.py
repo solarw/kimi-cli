@@ -429,8 +429,13 @@ class Shell:
             from kimi_cli.utils.telegram_sender import send_telegram_notification
 
             async def _on_tg_notification(notification: NotificationView) -> None:
+                if notification.event.severity not in ("error", "warning"):
+                    return  # silently acked by deliver_pending
+                severity = notification.event.severity.upper()
+                title = notification.event.title
+                body = notification.event.body
                 await send_telegram_notification(
-                    f"[{notification.event.severity.upper()}] {notification.event.title}\n\n{notification.event.body}"
+                    f"[{severity}] {title}\n\n{body}"
                 )
 
             tg_watcher = NotificationWatcher(
@@ -440,6 +445,7 @@ class Shell:
                 on_notification=_on_tg_notification,
             )
             self._start_background_task(tg_watcher.run_forever())
+
             self._start_background_task(self._watch_root_wire_hub())
             await replay_recent_history(
                 self.soul.context.history,
@@ -580,7 +586,8 @@ class Shell:
                             "<system-reminder>"
                             "Background tasks completed while you"
                             " were idle."
-                            "</system-reminder>"
+                            "</system-reminder>",
+                            skip_user_prompt_hook=True,
                         )
                         console.print()
                         if not ok:
@@ -831,7 +838,9 @@ class Shell:
             console.print(f"[red]Unknown error: {e}[/red]")
             raise  # re-raise unknown error
 
-    async def run_soul_command(self, user_input: str | list[ContentPart]) -> bool:
+    async def run_soul_command(
+        self, user_input: str | list[ContentPart], *, skip_user_prompt_hook: bool = False
+    ) -> bool:
         """
         Run the soul and handle any known exceptions.
 
@@ -895,6 +904,7 @@ class Shell:
                 cancel_event,
                 runtime.session.wire_file if runtime else None,
                 runtime,
+                skip_user_prompt_hook=skip_user_prompt_hook,
             )
             # If btw is still showing, wait for user dismiss BEFORE draining
             # queue.  This runs AFTER visualize_loop returns (within run_soul's

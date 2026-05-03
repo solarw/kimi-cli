@@ -886,22 +886,11 @@ async def fork(app: Shell, args: str):
 @registry.command
 async def tg_test(app: Shell, args: str):
     """Send a test notification to Telegram."""
-    soul = ensure_kimi_soul(app)
-    if soul is None:
-        return
-    from kimi_cli.notifications import NotificationEvent
+    from kimi_cli.utils.telegram_sender import send_telegram_notification
 
-    event = NotificationEvent(
-        id=soul.runtime.notifications.new_id(),
-        category="system",
-        type="telegram.test",
-        source_kind="user",
-        source_id="tg_test",
-        title="Telegram test notification",
-        body="This is a test notification from Kimi Code CLI.",
-        severity="info",
+    await send_telegram_notification(
+        "ℹ️ [INFO] Telegram test notification\n\nThis is a test from Kimi Code CLI."
     )
-    soul.runtime.notifications.publish(event)
     console.print("[green]Test notification sent.[/green]")
 
 
