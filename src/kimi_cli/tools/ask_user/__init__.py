@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from kimi_cli.soul import get_wire_or_none, wire_send
 from kimi_cli.soul.toolset import get_current_tool_call_or_none
 from kimi_cli.tools.utils import load_desc
+from kimi_cli.utils.telegram_sender import send_telegram_notification
 from kimi_cli.wire.types import QuestionItem, QuestionNotSupported, QuestionOption, QuestionRequest
 
 logger = logging.getLogger(__name__)
@@ -118,6 +119,16 @@ class AskUserQuestion(CallableTool2[Params]):
         )
 
         wire_send(request)
+
+        try:
+            question_texts = "\n".join(
+                f"{i+1}. {q.question}" for i, q in enumerate(questions)
+            )
+            await send_telegram_notification(
+                f"❓ Вопрос от Kimi:\n\n{question_texts[:800]}"
+            )
+        except Exception:
+            logger.exception("Failed to send Telegram question notification")
 
         try:
             answers = await request.wait()
