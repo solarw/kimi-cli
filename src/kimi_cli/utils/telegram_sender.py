@@ -8,7 +8,11 @@ from __future__ import annotations
 
 import os
 
+from dotenv import load_dotenv
+
 from kimi_cli.utils.logging import logger
+
+load_dotenv()
 
 _bot = None
 
