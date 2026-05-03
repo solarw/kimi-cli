@@ -1222,8 +1222,9 @@ class CustomPromptSession:
         self._prompt_buffer_container: ConditionalContainer | None = None
         self._last_ui_state: PromptUIState = PromptUIState.NORMAL_INPUT
         self._suspended_buffer_document: Document | None = None
-        clipboard_available = is_clipboard_available()
-        media_clipboard_available = is_media_clipboard_available()
+        # clipboard_available = is_clipboard_available()
+        clipboard_available = False
+        media_clipboard_available = False
         self._tips = _build_toolbar_tips(clipboard_available or media_clipboard_available)
         self._tip_rotation_index: int = random.randrange(len(self._tips)) if self._tips else 0
 
@@ -1503,11 +1504,7 @@ class CustomPromptSession:
                     self._insert_pasted_text(event.current_buffer, clipboard_data.text)
                     event.app.invalidate()
 
-        # Only use PyperclipClipboard when pyperclip actually works.
-        # PromptSession built-in keybindings (ctrl-k, ctrl-w, ctrl-y)
-        # use clipboard without error handling, so a broken clipboard
-        # object would crash the UI.
-        clipboard = PyperclipClipboard() if clipboard_available else None
+        clipboard = None
 
         self._session = PromptSession[str](
             message=self._render_message,
