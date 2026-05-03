@@ -12,6 +12,7 @@ from kimi_cli.utils.aioqueue import QueueShutDown
 from kimi_cli.utils.logging import logger
 from kimi_cli.wire import Wire
 from kimi_cli.wire.file import WireFile
+from kimi_cli.notifications import NotificationEvent
 from kimi_cli.wire.types import ContentPart, MCPStatusSnapshot, WireMessage
 
 if TYPE_CHECKING:
@@ -230,7 +231,12 @@ async def run_soul(
             cancel_event_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await cancel_event_task
-            soul_task.result()  # this will raise if any exception was raised in the run task
+            try:
+                soul_task.result()  # this will raise if any exception was raised in the run task
+                _publish_turn_notification(runtime, user_input, "success")
+            except Exception as exc:
+                _publish_turn_notification(runtime, user_input, "error", str(exc))
+                raise
     finally:
         notification_task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
@@ -274,6 +280,39 @@ def wire_send(msg: WireMessage) -> None:
     wire = get_wire_or_none()
     assert wire is not None, "Wire is expected to be set when soul is running"
     wire.soul_side.send(msg)
+
+
+def _publish_turn_notification(
+    runtime: Runtime | None,
+    user_input: str | list[ContentPart],
+    status: str,
+    error: str | None = None,
+) -> None:
+    if runtime is None:
+        return
+    try:
+        title_text = user_input if isinstance(user_input, str) else "[multimedia input]"
+        title = title_text[:60] + ("..." if len(title_text) > 60 else "")
+        if status == "success":
+            severity = "success"
+            body = f"Turn completed successfully.\n\nInput: {title_text}"
+        else:
+            severity = "error"
+            body = f"Turn failed with error: {error}\n\nInput: {title_text}"
+        runtime.notifications.publish(
+            NotificationEvent(
+                id=runtime.notifications.new_id(),
+                category="task",
+                type=f"turn.{status}",
+                source_kind="soul",
+                source_id="foreground",
+                title=f"Turn {status}: {title}",
+                body=body,
+                severity=severity,  # type: ignore[arg-type]
+            )
+        )
+    except Exception:
+        logger.exception("Failed to publish turn completion notification")
 
 
 async def _pump_notifications_to_wire(runtime: Runtime | None, wire: Wire) -> None:
