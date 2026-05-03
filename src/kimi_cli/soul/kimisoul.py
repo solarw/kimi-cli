@@ -31,6 +31,7 @@ from kimi_cli.background import build_active_task_snapshot
 from kimi_cli.hooks.engine import HookEngine
 from kimi_cli.llm import ModelCapability
 from kimi_cli.notifications import (
+    NotificationEvent,
     NotificationView,
     build_notification_message,
     extract_notification_ids,
@@ -1436,6 +1437,19 @@ class KimiSoul:
                 await self._runtime.oauth.ensure_fresh(self._runtime, force=True)
             except Exception as refresh_exc:
                 logger.exception("Token refresh failed after 401.")
+                if self._runtime and self._runtime.notifications:
+                    self._runtime.notifications.publish(
+                        NotificationEvent(
+                            id=self._runtime.notifications.new_id(),
+                            category="system",
+                            type="llm.auth_failed",
+                            source_kind="llm",
+                            source_id="auth",
+                            title="Authentication failed",
+                            body=f"Token refresh failed after 401: {refresh_exc}",
+                            severity="error",
+                        )
+                    )
                 raise error from refresh_exc
             # Re-enter full recovery so that transient connection errors
             # on the retry are still handled by on_retryable_error.
@@ -1454,6 +1468,19 @@ class KimiSoul:
                     error_type=type(error).__name__,
                     error=error,
                 )
+                if self._runtime and self._runtime.notifications:
+                    self._runtime.notifications.publish(
+                        NotificationEvent(
+                            id=self._runtime.notifications.new_id(),
+                            category="system",
+                            type="llm.recovery_exhausted",
+                            source_kind="llm",
+                            source_id="connection",
+                            title="LLM connection failed",
+                            body=f"Recovery exhausted for {name}: {type(error).__name__}: {error}",
+                            severity="error",
+                        )
+                    )
                 error._kimi_recovery_exhausted = True  # type: ignore[attr-defined]
                 raise
             if not isinstance(chat_provider, RetryableChatProvider):

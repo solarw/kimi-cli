@@ -883,6 +883,28 @@ async def fork(app: Shell, args: str):
     raise Reload(session_id=new_session_id)
 
 
+@registry.command
+async def tg_test(app: Shell, args: str):
+    """Send a test notification to Telegram."""
+    soul = ensure_kimi_soul(app)
+    if soul is None:
+        return
+    from kimi_cli.notifications import NotificationEvent
+
+    event = NotificationEvent(
+        id=soul.runtime.notifications.new_id(),
+        category="system",
+        type="telegram.test",
+        source_kind="user",
+        source_id="tg_test",
+        title="Telegram test notification",
+        body="This is a test notification from Kimi Code CLI.",
+        severity="info",
+    )
+    soul.runtime.notifications.publish(event)
+    console.print("[green]Test notification sent.[/green]")
+
+
 from . import (  # noqa: E402
     debug,  # noqa: F401 # type: ignore[reportUnusedImport]
     export_import,  # noqa: F401 # type: ignore[reportUnusedImport]
