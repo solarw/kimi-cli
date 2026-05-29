@@ -996,10 +996,7 @@ class Shell:
                     f"[red]Membership expired, please renew your plan[/red]\n[dim]Server: {e}[/dim]"
                 )
             elif isinstance(e, APIStatusError) and e.status_code == 403:
-                console.print(
-                    "[red]Quota exceeded, please upgrade your plan or retry later[/red]\n"
-                    f"[dim]Server: {e}[/dim]"
-                )
+                console.print(f"[red]Server: {e}[/red]")
             elif isinstance(e, APIConnectionError):
                 console.print(
                     f"[red]Network connection failed: {e}[/red]\n"
@@ -1503,7 +1500,7 @@ class WelcomeInfoItem:
         ERROR = "red"
 
     name: str
-    value: str
+    value: str | Text
     level: Level = Level.INFO
 
 
@@ -1523,7 +1520,10 @@ def _print_welcome_info(name: str, info_items: list[WelcomeInfoItem]) -> None:
     if info_items:
         rows.append(Text(""))  # empty line
     for item in info_items:
-        rows.append(Text(f"{item.name}: {item.value}", style=item.level.value))
+        if isinstance(item.value, Text):
+            rows.append(Text.assemble(f"{item.name}: ", item.value, style=item.level.value))
+        else:
+            rows.append(Text(f"{item.name}: {item.value}", style=item.level.value))
 
     if LATEST_VERSION_FILE.exists():
         from kimi_cli.constant import VERSION as current_version
